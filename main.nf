@@ -31,10 +31,14 @@ include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_ncrn
 workflow NFCORE_NCRNANNOTATOR {
 
     main:
-    NCRNANNOTATOR()
-
+    NCRNANNOTATOR (
+        params.multiqc_config,
+        params.multiqc_logo,
+        params.multiqc_methods_description,
+        params.outdir,
+    )
     emit:
-    multiqc_report = NCRNANNOTATOR.out.multiqc_report
+    multiqc_report = NCRNANNOTATOR.out.multiqc_report // channel: /path/to/multiqc_report.html
 }
 
 /*
@@ -64,7 +68,7 @@ workflow {
     //
     // WORKFLOW: Run main workflow
     //
-    NFCORE_NCRNANNOTATOR()
+    NFCORE_NCRNANNOTATOR ()
 
     //
     // SUBWORKFLOW: Run completion tasks
@@ -75,7 +79,6 @@ workflow {
         params.plaintext_email,
         params.outdir,
         params.monochrome_logs,
-        params.hook_url,
         NFCORE_NCRNANNOTATOR.out.multiqc_report
     )
 }

@@ -1,5 +1,9 @@
 # nf-core/ncrnannotator: Usage
 
+## :warning: Please read this documentation on the nf-core website: [https://nf-co.re/ncrnannotator/usage](https://nf-co.re/ncrnannotator/usage)
+
+> _Documentation of pipeline parameters is generated automatically from the pipeline schema and can no longer be found in markdown files._
+
 ## Introduction
 
 ncrnannotator annotates non-coding RNA in genome assemblies using [Infernal](http://eddylab.org/infernal/) and the [Rfam](https://rfam.org/) database. It produces annotation files in GTF, GFF3, and BED format.

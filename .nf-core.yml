@@ -1,21 +1,24 @@
-repository_type: pipeline
-nf_core_version: 3.5.2
 lint:
+  files_exist:
+    - .github/workflows/linting_comment.yml
   files_unchanged:
     - docs/images/nf-core-ncrnannotator_logo_light.png
     - docs/images/nf-core-ncrnannotator_logo_dark.png
     - assets/nf-core-ncrnannotator_logo_light.png
     - .github/workflows/branch.yml
     - .github/workflows/linting.yml
+    - .gitignore
+  template_strings:
+    - tests/data/rfam_test.seed
   included_configs: false
-  files_exist:
-    - .github/workflows/linting_comment.yml
+nf_core_version: 4.1.0
+repository_type: pipeline
 template:
-  org: nf-core
-  name: ncrnannotator
-  description: ncRNA annotation pipeline
   author: RNAcentral
-  version: 1.0dev
-  force: true
-  outdir: .
+  description: ncRNA annotation pipeline
+  force: false
   is_nfcore: true
+  name: ncrnannotator
+  org: nf-core
+  outdir: .
+  version: 1.0dev
