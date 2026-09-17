@@ -11,6 +11,8 @@ Initial release of nf-core/ncrnannotator, created with the [nf-core](https://nf-
 
 ### `Fixed`
 
+- Fixed `extract_rfam_metrics` in `parse_rfam_results.py` reading the GA gathering cutoff from the wrong section of each `.cm` record. The HMMER3 filter section (which has no `GA` line) was overwriting the covariance model's metrics, leaving every model without a GA threshold and causing all non-rRNA hits (tRNA, snRNA, snoRNA, SRP, etc.) to be silently discarded. The parser now only reads the INFERNAL covariance-model section.
+
 ### `Dependencies`
 
 ### `Deprecated`
