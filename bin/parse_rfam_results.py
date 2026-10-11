@@ -69,30 +69,46 @@ def parse_args():
 # Parse .cm metrics
 # ---------------------------------------------------------------------------
 def extract_rfam_metrics(rfam_cm_path):
-    """Return dict: accession -> {name, clen, w, ga} from a (filtered) .cm file."""
+    """Return dict: accession -> {name, clen, w, ga} from a (filtered) .cm file.
+
+    Each record in a .cm file consists of two sections separated by ``//``: the
+    INFERNAL covariance model — which carries the ``GA`` gathering cutoff — and a
+    HMMER3 filter model that repeats ``NAME``/``ACC`` but has *no* ``GA`` line.
+    Only the covariance-model section is parsed; the filter section is skipped so
+    that its GA-less metrics cannot overwrite the model's real cutoff (otherwise
+    every non-rRNA hit is discarded downstream for lack of a GA threshold).
+    """
     metrics = {}
     current = {}
+    in_cm = False
     with open(rfam_cm_path) as fh:
         for line in fh:
             line = line.rstrip("\n")
             if line.startswith("INFERNAL"):
                 current = {}
+                in_cm = True
+            elif line.startswith("HMMER3"):
+                # Start of the filter HMM section — stop recording until ``//``
+                in_cm = False
+            elif line.startswith("//"):
+                if in_cm and "acc" in current:
+                    metrics[current["acc"]] = dict(current)
+                current = {}
+                in_cm = False
+            elif not in_cm:
+                continue
             elif line.startswith("NAME"):
                 current["name"] = line.split()[1]
             elif line.startswith("ACC"):
                 current["acc"] = line.split()[1]
             elif line.startswith("CLEN"):
                 current["clen"] = int(line.split()[1])
-            elif line.startswith("W"):
+            elif line.startswith("W "):
+                # ``W`` window length; the trailing space avoids matching ``WBETA``
                 current["w"] = int(float(line.split()[1]))
             elif line.startswith("GA"):
-                # GA  <seq_ga>  <hmm_ga>;   we use seq_ga
-                parts = line.split()
-                current["ga"] = float(parts[1].rstrip(";"))
-            elif line.startswith("//"):
-                if "acc" in current:
-                    metrics[current["acc"]] = dict(current)
-                current = {}
+                # GA  <bit_score>;  — the sequence-level gathering cutoff
+                current["ga"] = float(line.split()[1].rstrip(";"))
     return metrics
 
 
