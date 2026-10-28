@@ -10,19 +10,8 @@
             "type": "object",
             "fa_icon": "fas fa-terminal",
             "description": "Define where the pipeline should find input data and save output data.",
-            "required": ["input", "outdir"],
+            "required": ["outdir"],
             "properties": {
-                "input": {
-                    "type": "string",
-                    "format": "file-path",
-                    "exists": true,
-                    "schema": "assets/schema_input.json",
-                    "mimetype": "text/csv",
-                    "pattern": "^\\S+\\.csv$",
-                    "description": "Path to comma-separated file containing information about the samples in the experiment.",
-                    "help_text": "You will need to create a design file with information about the samples in your experiment before running the pipeline. Use this parameter to specify its location. It has to be a comma-separated file with 3 columns, and a header row. See [usage docs](https://nf-co.re/ncrnannotator/usage#samplesheet-input).",
-                    "fa_icon": "fas fa-file-csv"
-                },
                 "outdir": {
                     "type": "string",
                     "format": "directory-path",
@@ -43,17 +32,19 @@
                 }
             }
         },
-        "reference_genome_options": {
-            "title": "Reference genome options",
+        "pipeline_options": {
+            "title": "Pipeline options",
             "type": "object",
             "fa_icon": "fas fa-dna",
-            "description": "Reference genome related files and options required for the workflow.",
+            "description": "Parameters specific to the ncRNA annotation pipeline.",
+            "required": ["fasta", "mode", "rfam_cm", "rfam_seed"],
             "properties": {
-                "genome": {
+                "input": {
                     "type": "string",
-                    "description": "Name of iGenomes reference.",
-                    "fa_icon": "fas fa-book",
-                    "help_text": "If using a reference genome configured in the pipeline using iGenomes, use this parameter to give the ID for the reference. This is then used to build the full paths for all required reference genome files e.g. `--genome GRCh38`. \n\nSee the [nf-core website docs](https://nf-co.re/usage/reference_genomes) for more details."
+                    "format": "file-path",
+                    "description": "Not used by this pipeline. Present for nf-core schema compatibility.",
+                    "fa_icon": "fas fa-file-csv",
+                    "hidden": true
                 },
                 "fasta": {
                     "type": "string",
@@ -61,23 +52,47 @@
                     "exists": true,
                     "mimetype": "text/plain",
                     "pattern": "^\\S+\\.fn?a(sta)?(\\.gz)?$",
-                    "description": "Path to FASTA genome file.",
-                    "help_text": "This parameter is *mandatory* if `--genome` is not specified. If you don't have a BWA index available this will be generated for you automatically. Combine with `--save_reference` to save BWA index for future runs.",
+                    "description": "Path to the genome FASTA file to annotate.",
+                    "help_text": "Path to the genome assembly in FASTA format. Can be uncompressed or gzip-compressed.",
                     "fa_icon": "far fa-file-code"
                 },
-                "igenomes_ignore": {
-                    "type": "boolean",
-                    "description": "Do not load the iGenomes reference config.",
-                    "fa_icon": "fas fa-ban",
-                    "hidden": true,
-                    "help_text": "Do not load `igenomes.config` when running the pipeline. You may choose this option if you observe clashes between custom parameters and those supplied in `igenomes.config`."
-                },
-                "igenomes_base": {
+                "mode": {
                     "type": "string",
-                    "description": "The base path to the igenomes reference files",
-                    "fa_icon": "fas fa-ban",
-                    "hidden": true,
-                    "default": "s3://ngi-igenomes/igenomes/"
+                    "description": "Annotation mode: 'ensembl-vertebrates' (1 Mbp chunks), 'ensembl-invertebrates' (100 kbp chunks), 'mgnify-assembly' (50 Mbp chunks, full Rfam, includes prokaryotic rRNA), or 'full' (1 Mbp chunks, full Rfam, eukaryotic only).",
+                    "fa_icon": "fas fa-sitemap",
+                    "enum": ["ensembl-vertebrates", "ensembl-invertebrates", "mgnify-assembly", "full"],
+                    "help_text": "Selects the annotation strategy and default chunk size. mgnify-assembly uses the full Rfam database without clade filtering, suitable for metagenomic assemblies. full uses the complete Rfam database with standard Infernal scoring, eukaryotic output only."
+                },
+                "rfam_cm": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Path to the Rfam covariance model file (Rfam.cm).",
+                    "help_text": "Full Rfam.cm file downloaded from https://ftp.ebi.ac.uk/pub/databases/Rfam/CURRENT/Rfam.cm.gz. Must be cmpress-indexed before use.",
+                    "fa_icon": "fas fa-file-alt"
+                },
+                "rfam_seed": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Path to the Rfam seed alignment file (Rfam.seed).",
+                    "help_text": "Full Rfam.seed file downloaded from https://ftp.ebi.ac.uk/pub/databases/Rfam/CURRENT/Rfam.seed.gz. Used to extract biotype descriptions.",
+                    "fa_icon": "fas fa-file-alt"
+                },
+                "rfam_accessions": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Optional override for the Rfam accession list file.",
+                    "help_text": "By default, the pipeline uses the accession list bundled in assets/rfam_accessions/{mode}.txt. Provide a custom file to override. Each line should contain one RF##### accession.",
+                    "fa_icon": "fas fa-list"
+                },
+                "chunk_size": {
+                    "type": "integer",
+                    "description": "Genome chunk size in base pairs for parallel cmsearch.",
+                    "help_text": "Defaults to 1,000,000 bp for ensembl-vertebrates and 100,000 bp for ensembl-invertebrates. Override with this parameter.",
+                    "fa_icon": "fas fa-cut",
+                    "minimum": 1000
                 }
             }
         },
@@ -237,7 +252,7 @@
             "$ref": "#/$defs/input_output_options"
         },
         {
-            "$ref": "#/$defs/reference_genome_options"
+            "$ref": "#/$defs/pipeline_options"
         },
         {
             "$ref": "#/$defs/institutional_config_options"
