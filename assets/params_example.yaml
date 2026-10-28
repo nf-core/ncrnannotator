@@ -1,0 +1,41 @@
+# ncrnannotator example params file
+# Usage: nextflow run Rfam/ncrnannotator -params-file params.yaml -profile docker
+#
+# Fill in the paths below and select the annotation mode that matches your data.
+# Remove or comment out optional parameters you don't need.
+
+# ---------------------------------------------------------------------------
+# Required inputs
+# ---------------------------------------------------------------------------
+
+# Path to genome assembly (uncompressed or .gz)
+fasta: /path/to/genome.fa
+
+# Annotation mode: ensembl-vertebrates | ensembl-invertebrates | mgnify-assembly | full
+mode: ensembl-vertebrates
+
+# Rfam database files (download from https://ftp.ebi.ac.uk/pub/databases/Rfam/CURRENT/)
+rfam_cm: /path/to/Rfam.cm
+rfam_seed: /path/to/Rfam.seed
+
+# Output directory
+outdir: results
+# ---------------------------------------------------------------------------
+# Optional parameters
+# ---------------------------------------------------------------------------
+
+# Override genome chunk size (bp). Defaults are mode-dependent:
+#   ensembl-vertebrates:   1,000,000 bp
+#   ensembl-invertebrates:   100,000 bp
+#   mgnify-assembly:      50,000,000 bp
+# chunk_size: 500000
+
+# Custom Rfam accession list (overrides bundled vertebrates/invertebrates lists).
+# Each line should contain one RF##### accession. Not used in mgnify-assembly mode.
+# rfam_accessions: /path/to/my_accessions.txt
+
+# Email notification on pipeline completion
+# email: user@example.com
+
+# MultiQC report title
+# multiqc_title: "My genome ncRNA annotation"

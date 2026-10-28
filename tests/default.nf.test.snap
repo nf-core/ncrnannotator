@@ -1,0 +1,60 @@
+{
+    "-profile test": {
+        "content": [
+            {
+                "CMSEARCH": {
+                    "infernal": "1.1.5"
+                },
+                "FILTER_RFAM_CM": {
+                    "python": "3.10.2"
+                },
+                "GENOME_CHUNK": {
+                    "python": "3.10.2"
+                },
+                "PARSE_RFAM": {
+                    "python": "3.10.2"
+                },
+                "RFAM_TO_FORMATS": {
+                    "python": "3.10.2"
+                },
+                "Workflow": {
+                    "nf-core/ncrnannotator": "v1.0dev"
+                }
+            },
+            [
+                "annotation",
+                "annotation/annotation.bed",
+                "annotation/annotation.gff3",
+                "annotation/annotation.gtf",
+                "multiqc",
+                "multiqc/multiqc_data",
+                "multiqc/multiqc_data/llms-full.txt",
+                "multiqc/multiqc_data/multiqc.log",
+                "multiqc/multiqc_data/multiqc.parquet",
+                "multiqc/multiqc_data/multiqc_citations.txt",
+                "multiqc/multiqc_data/multiqc_data.json",
+                "multiqc/multiqc_data/multiqc_software_versions.txt",
+                "multiqc/multiqc_data/multiqc_sources.txt",
+                "multiqc/multiqc_report.html",
+                "pipeline_info",
+                "pipeline_info/nf_core_ncrnannotator_software_mqc_versions.yml",
+                "rfam",
+                "rfam/rfam_filtered.cm",
+                "rfam/rfam_hits.tsv"
+            ],
+            [
+                "annotation.bed:md5,d41d8cd98f00b204e9800998ecf8427e",
+                "annotation.gff3:md5,df19e1b84ba6f691d20c72b397c88abf",
+                "annotation.gtf:md5,e81f3f49a91295f04345aac14da6ecb7",
+                "multiqc_citations.txt:md5,4c806e63a283ec1b7e78cdae3a923d4f",
+                "rfam_filtered.cm:md5,f9eeb0fce2cc968d2c8267c642e7c5b5",
+                "rfam_hits.tsv:md5,c3830c7760082d71506aca238cd1b6e8"
+            ]
+        ],
+        "timestamp": "2026-09-11T16:04:38.743926",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.04.6"
+        }
+    }
+}

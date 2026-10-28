@@ -1,0 +1,192 @@
+#!/usr/bin/env python3
+"""
+fetch_rfam_accessions.py — query the Rfam public MySQL database to retrieve
+RF##### accessions for a given taxonomic clade and write them to a text file.
+
+Port of fetch_rfam_accessions.pl from ensembl-analysis (vertebrate Hive pipeline).
+
+Rfam public database connection:
+  Host: mysql-rfam-public.ebi.ac.uk
+  Port: 4497
+  User: rfamro (read-only, no password)
+  Database: Rfam
+
+Usage:
+    # Vertebrates
+    python fetch_rfam_accessions.py --clade vertebrata \\
+        --output assets/rfam_accessions/vertebrates.txt
+
+    # Invertebrates / insects
+    python fetch_rfam_accessions.py --clade insect \\
+        --output assets/rfam_accessions/invertebrates.txt
+
+Requirements:
+    pip install PyMySQL
+"""
+
+import argparse
+import sys
+from datetime import date
+
+try:
+    import pymysql
+except ImportError:
+    print("ERROR: PyMySQL is required.  Install with:  pip install PyMySQL",
+          file=sys.stderr)
+    sys.exit(1)
+
+# ---------------------------------------------------------------------------
+# Clade-specific SQL (ported from ensembl-analysis fetch_rfam_accessions.pl)
+# ---------------------------------------------------------------------------
+# The query retrieves accessions for families that:
+#   - Are significant (score > 0 against at least one sequence)
+#   - Belong to the target taxonomy
+#   - Exclude bacteria, archaea, microsporidia rRNA families
+# ---------------------------------------------------------------------------
+
+CLADE_CONFIGS = {
+    "vertebrata": {
+        "ncbi_id": 7742,
+        "description": "vertebrata clade (Rfam families for vertebrate ncRNA annotation)",
+    },
+    "insect": {
+        "ncbi_id": 50557,  # Insecta
+        "description": "insect/invertebrate clade (Rfam families for invertebrate ncRNA annotation)",
+    },
+}
+
+# SQL used in ensembl-analysis to fetch relevant Rfam families for a clade
+RFAM_SQL = """
+SELECT DISTINCT
+    f.rfam_acc
+FROM
+    family f
+    JOIN taxonomy t ON (
+        f.ncbi_id = t.ncbi_id
+        OR f.ncbi_id IN (
+            SELECT t2.ncbi_id
+            FROM taxonomy t2
+            WHERE t2.tree_display_name LIKE %s
+        )
+    )
+    JOIN full_region fr ON fr.rfam_acc = f.rfam_acc
+WHERE
+    fr.is_significant = 1
+    AND f.rfam_acc NOT IN (
+        SELECT rfam_acc FROM family
+        WHERE rfam_id IN (
+            'LSU_rRNA_archaea', 'LSU_rRNA_bacteria',
+            'SSU_rRNA_archaea', 'SSU_rRNA_bacteria',
+            'SSU_rRNA_microsporidia'
+        )
+    )
+ORDER BY f.rfam_acc
+"""
+
+# Simpler fallback query — works even without full_region
+RFAM_SQL_SIMPLE = """
+SELECT DISTINCT
+    f.rfam_acc
+FROM
+    family f
+    JOIN taxonomy t ON f.ncbi_id = t.ncbi_id
+WHERE
+    t.ncbi_id = %s
+    OR t.ncbi_id IN (
+        SELECT t2.ncbi_id FROM taxonomy t2
+        WHERE t2.parent = %s
+    )
+ORDER BY f.rfam_acc
+"""
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description=__doc__,
+                                     formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("--clade", required=True,
+                        choices=list(CLADE_CONFIGS.keys()),
+                        help="Taxonomic clade to fetch accessions for")
+    parser.add_argument("--output", required=True,
+                        help="Output text file path")
+    parser.add_argument("--host", default="mysql-rfam-public.ebi.ac.uk",
+                        help="MySQL host (default: mysql-rfam-public.ebi.ac.uk)")
+    parser.add_argument("--port", type=int, default=4497,
+                        help="MySQL port (default: 4497)")
+    parser.add_argument("--user", default="rfamro",
+                        help="MySQL user (default: rfamro)")
+    parser.add_argument("--password", default="",
+                        help="MySQL password (default: empty)")
+    parser.add_argument("--database", default="Rfam",
+                        help="MySQL database name (default: Rfam)")
+    return parser.parse_args()
+
+
+def fetch_accessions(conn, clade, clade_config):
+    """Execute the Rfam query and return a sorted list of RF##### accessions."""
+    ncbi_id = clade_config["ncbi_id"]
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute(RFAM_SQL, (f"%{clade}%",))
+        rows = cursor.fetchall()
+        accessions = sorted(set(r[0] for r in rows))
+    except Exception as exc:
+        print(f"WARNING: full query failed ({exc}), trying ncbi_id fallback...",
+              file=sys.stderr)
+        cursor.execute(RFAM_SQL_SIMPLE, (ncbi_id, ncbi_id))
+        rows = cursor.fetchall()
+        accessions = sorted(set(r[0] for r in rows))
+
+    cursor.close()
+    return accessions
+
+
+def write_output(accessions, clade, clade_config, output_path):
+    today = date.today().isoformat()
+    with open(output_path, "w") as out:
+        out.write(f"# Rfam accessions for {clade_config['description']}\n")
+        out.write(f"# Generated by fetch_rfam_accessions.py --clade {clade}\n")
+        out.write(f"# Date: {today}\n")
+        out.write(f"# Total accessions: {len(accessions)}\n")
+        for acc in accessions:
+            out.write(acc + "\n")
+
+
+def main():
+    args = parse_args()
+    clade_config = CLADE_CONFIGS[args.clade]
+
+    print(f"Connecting to {args.user}@{args.host}:{args.port}/{args.database}...",
+          file=sys.stderr)
+
+    try:
+        conn = pymysql.connect(
+            host=args.host,
+            port=args.port,
+            user=args.user,
+            password=args.password,
+            database=args.database,
+            connect_timeout=30,
+        )
+    except Exception as exc:
+        print(f"ERROR: could not connect to Rfam database: {exc}", file=sys.stderr)
+        sys.exit(1)
+
+    try:
+        print(f"Fetching accessions for clade '{args.clade}' "
+              f"(NCBI taxid {clade_config['ncbi_id']})...", file=sys.stderr)
+        accessions = fetch_accessions(conn, args.clade, clade_config)
+        print(f"  Retrieved {len(accessions)} accessions", file=sys.stderr)
+    finally:
+        conn.close()
+
+    if not accessions:
+        print("WARNING: no accessions retrieved — check clade name and database connection",
+              file=sys.stderr)
+
+    write_output(accessions, args.clade, clade_config, args.output)
+    print(f"Wrote {len(accessions)} accessions to {args.output}", file=sys.stderr)
+
+
+if __name__ == "__main__":
+    main()

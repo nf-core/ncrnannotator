@@ -10,9 +10,13 @@
 
 ## Pipeline tools
 
-- [FastQC](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/)
+- [Rfam](https://pubmed.ncbi.nlm.nih.gov/39526405/)
 
-> Andrews, S. (2010). FastQC: A Quality Control Tool for High Throughput Sequence Data [Online].
+> Ontiveros-Palacios N, Cooke E, Nawrocki EP, Triebel S, Marz M, Rivas E, Griffiths-Jones S, Petrov AI, Bateman A, Sweeney B. Rfam 15: RNA families database in 2025. Nucleic Acids Res. 2025 Jan 6;53(D1):D258-D267. doi: 10.1093/nar/gkae1023. PubMed PMID: 39526405; PubMed Central PMCID: PMC11701678.
+
+- [Infernal](https://pubmed.ncbi.nlm.nih.gov/19307242/)
+
+> Nawrocki EP, Kolbe DL, Eddy SR. Infernal 1.0: inference of RNA alignments. Bioinformatics. 2009 May 15;25(10):1335-7. doi: 10.1093/bioinformatics/btp157. Epub 2009 Mar 23. Erratum in: Bioinformatics. 2009 Jul 1;25(13):1713. PubMed PMID: 19307242; PubMed Central PMCID: PMC2732312.
 
 - [MultiQC](https://pubmed.ncbi.nlm.nih.gov/27312411/)
 

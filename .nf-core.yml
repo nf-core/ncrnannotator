@@ -8,9 +8,9 @@ lint:
     - .github/workflows/branch.yml
     - .github/workflows/linting.yml
     - .gitignore
-  included_configs: false
   template_strings:
     - tests/data/rfam_test.seed
+  included_configs: false
 nf_core_version: 4.2.1
 repository_type: pipeline
 template:
